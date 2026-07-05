@@ -4,6 +4,8 @@ import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
 import ClientDashboard from './pages/ClientDashboard'
 import OperatorDashboard from './pages/OperatorDashboard'
+import Onboarding from './pages/Onboarding'
+import OnboardingCallback from './pages/OnboardingCallback'
 import './styles/global.css'
 
 function ProtectedRoute({ children }) {
@@ -60,6 +62,12 @@ export default function App() {
           } />
           <Route path="/operator" element={
             <ProtectedRoute><OperatorDashboard /></ProtectedRoute>
+          } />
+          <Route path="/onboarding" element={
+            <ProtectedRoute><Onboarding /></ProtectedRoute>
+          } />
+          <Route path="/onboarding/callback" element={
+            <ProtectedRoute><OnboardingCallback /></ProtectedRoute>
           } />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
