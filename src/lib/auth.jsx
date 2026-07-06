@@ -40,8 +40,8 @@ export function AuthProvider({ children }) {
       const { data } = await supabase
         .from('clients')
         .select('*')
-        .eq('email', u.email)
-        .single()
+        .eq('supabase_user_id', u.id)
+        .maybeSingle()
       setClient(data)
     }
 
