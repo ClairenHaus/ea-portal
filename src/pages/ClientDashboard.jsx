@@ -20,7 +20,7 @@ export default function ClientDashboard() {
     const [b, a, t] = await Promise.all([
       supabase.from('briefings').select('*').eq('client_id', client.id).order('created_at', { ascending: false }).limit(10),
       supabase.from('activity_log').select('*').eq('client_id', client.id).order('created_at', { ascending: false }).limit(20),
-      supabase.from('telegram_sessions').select('*').eq('client_id', client.id).single()
+      supabase.from('telegram_sessions').select('*').eq('client_id', client.id).maybeSingle()
     ])
     if (b.data) setBriefings(b.data)
     if (a.data) setActivity(a.data)
