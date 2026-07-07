@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
-const GOOGLE_CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET
 const REDIRECT_URI = 'https://portal.clairenhaus.com/onboarding/callback'
 
 export default function OnboardingCallback() {
@@ -19,7 +17,7 @@ export default function OnboardingCallback() {
     try {
       const params = new URLSearchParams(window.location.search)
       const code = params.get('code')
-      const state = params.get('state') // supabase user id
+      const state = params.get('state')
 
       if (!code) {
         setError('Authorization was cancelled or failed. Please try again.')
@@ -28,7 +26,6 @@ export default function OnboardingCallback() {
 
       setStatus('Exchanging authorization code...')
 
-      // Exchange code for tokens via our n8n endpoint
       const tokenRes = await fetch('https://n8n-production-7c11.up.railway.app/webhook/ea-oauth-callback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -39,23 +36,31 @@ export default function OnboardingCallback() {
         throw new Error('Failed to exchange authorization code')
       }
 
-      const tokenData = await tokenRes.json()
+      let tokenData
+      try {
+        tokenData = await tokenRes.json()
+      } catch {
+        throw new Error('Token exchange returned an invalid response. Please try again.')
+      }
+
+      if (!tokenData.access_token) {
+        throw new Error('No access token received. Please try again.')
+      }
 
       setStatus('Saving your connection...')
 
-      // Get client record
       const { data: { user } } = await supabase.auth.getUser()
+
       const { data: clientData } = await supabase
         .from('clients')
         .select('id')
-        .eq('email', user.email)
-        .single()
+        .eq('supabase_user_id', user.id)
+        .maybeSingle()
 
       if (!clientData) {
         throw new Error('Client record not found')
       }
 
-      // Store OAuth tokens in Supabase
       const { error: tokenError } = await supabase
         .from('oauth_tokens')
         .upsert({
@@ -70,7 +75,6 @@ export default function OnboardingCallback() {
 
       if (tokenError) throw tokenError
 
-      // Update client onboarding status
       await supabase
         .from('clients')
         .update({ onboarding_status: 'oauth_connected' })
